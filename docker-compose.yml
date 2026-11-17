@@ -1,0 +1,16 @@
+services:
+  db:
+    image: postgres:15
+    restart: unless-stopped
+    container_name: postgres_db_myappbe
+    environment:
+      POSTGRES_USER: myappbe
+      POSTGRES_PASSWORD: 123456789
+      POSTGRES_DB: myappbe
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

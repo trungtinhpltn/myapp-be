@@ -1,0 +1,179 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+enum OrderStatus {
+  COMPLETED
+  CANCELLED
+}
+
+enum PointTxType {
+  EARN
+  REDEEM
+  REFUND_EARN
+  REFUND_REDEEM
+  ADJUST
+}
+
+enum StockMoveType {
+  PURCHASE
+  SALE
+  CANCEL_SALE
+  ADJUST
+}
+
+model User {
+  id          Int      @id @default(autoincrement())
+  username    String   @unique
+  password    String
+  fullName    String
+  phoneNumber String
+  role        Role     @default(STAFF)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  refreshTokens  RefreshToken[]
+  orders         Order[]
+  purchaseOrders PurchaseOrder[]
+}
+
+model RefreshToken {
+  id        Int      @id @default(autoincrement())
+  tokenHash String   @unique
+  expiresAt DateTime
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Supplier {
+  id          Int     @id @default(autoincrement())
+  name        String
+  phoneNumber String?
+  address     String?
+  purchaseOrders PurchaseOrder[]
+}
+
+model Category {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  products    Product[]
+}
+
+model Product {
+  id               Int      @id @default(autoincrement())
+  barcode          String   @unique
+  name             String
+  unit             String
+  categoryId       Int
+  category         Category @relation(fields: [categoryId], references: [id])
+  importPrice      Int      @default(0)
+  sellingPrice     Int      @default(0)
+  discountPrice    Int?
+  isOnSale         Boolean  @default(false)
+  stockQuantity    Int      @default(0)
+  minStockQuantity Int      @default(5)
+  isActive         Boolean  @default(true) // xóa mềm
+  purchaseOrderDetails PurchaseOrderDetail[]
+  orderDetails         OrderDetail[]
+  stockMovements       StockMovement[]
+  @@index([name])
+}
+
+model PurchaseOrder {
+  id          Int      @id @default(autoincrement())
+  supplierId  Int
+  userId      Int
+  totalAmount Int
+  note        String?
+  createdAt   DateTime @default(now())
+  supplier    Supplier @relation(fields: [supplierId], references: [id])
+  user        User     @relation(fields: [userId], references: [id])
+  details     PurchaseOrderDetail[]
+  @@index([createdAt])
+}
+
+model PurchaseOrderDetail {
+  id              Int @id @default(autoincrement())
+  purchaseOrderId Int
+  productId       Int
+  quantity        Int
+  price           Int // giá nhập
+  purchaseOrder   PurchaseOrder @relation(fields: [purchaseOrderId], references: [id], onDelete: Cascade)
+  product         Product       @relation(fields: [productId], references: [id])
+}
+
+model Customer {
+  id          Int      @id @default(autoincrement())
+  name        String
+  phoneNumber String   @unique
+  points      Int      @default(0)
+  createdAt   DateTime @default(now())
+  orders      Order[]
+  pointTxs    PointTransaction[]
+}
+
+model Order {
+  id             Int         @id @default(autoincrement())
+  userId         Int
+  customerId     Int?
+  status         OrderStatus @default(COMPLETED)
+  subtotal       Int         // tổng tiền hàng
+  discountAmount Int         @default(0) // giảm từ điểm (+ khuyến mãi khác)
+  finalAmount    Int         // khách phải trả
+  pointsUsed     Int         @default(0)
+  pointsEarned   Int         @default(0)
+  createdAt      DateTime    @default(now())
+  user           User        @relation(fields: [userId], references: [id])
+  customer       Customer?   @relation(fields: [customerId], references: [id])
+  details        OrderDetail[]
+  pointTxs       PointTransaction[]
+  @@map("orders")
+  @@index([createdAt])
+}
+
+model OrderDetail {
+  id        Int @id @default(autoincrement())
+  orderId   Int
+  productId Int
+  quantity  Int
+  unitPrice Int // giá bán tại thời điểm bán
+  costPrice Int // giá vốn tại thời điểm bán
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id])
+}
+
+model PointTransaction {
+  id           Int         @id @default(autoincrement())
+  customerId   Int
+  orderId      Int?
+  type         PointTxType
+  points       Int         // dương = cộng, âm = trừ
+  balanceAfter Int
+  note         String?
+  createdAt    DateTime    @default(now())
+  customer     Customer    @relation(fields: [customerId], references: [id])
+  order        Order?      @relation(fields: [orderId], references: [id])
+  @@index([customerId, createdAt])
+}
+
+model StockMovement {
+  id        Int           @id @default(autoincrement())
+  productId Int
+  product   Product       @relation(fields: [productId], references: [id])
+  type      StockMoveType
+  quantity  Int           // dương = nhập, âm = xuất
+  refId     Int?          // id đơn nhập/đơn bán liên quan
+  createdAt DateTime      @default(now())
+  @@index([productId, createdAt])
+}
+
