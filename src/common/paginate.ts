@@ -12,4 +12,4 @@ export function paginate<T>(data: T[], total: number, q: PaginationDto) {
   };
 }
 
-export const skikOf = (q: PaginationDto) => (q.page - 1) * q.limit;
+export const skipOf = (q: PaginationDto) => (q.page - 1) * q.limit;
