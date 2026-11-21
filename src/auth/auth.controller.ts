@@ -42,7 +42,7 @@ export class AuthController {
   @Public()
   @Post('refresh')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Refresh token' })
+  // @ApiOperation({ summary: 'Refresh token' })
   @ApiOkResponse({
     type: TokenResponse,
   })
@@ -57,9 +57,9 @@ export class AuthController {
   @Post('logout')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiNoContentResponse()
-  @ApiOperation({
-    summary: 'Logout delete refresh token',
-  })
+  // @ApiOperation({
+  //   summary: 'Logout delete refresh token',
+  // })
   logout(@Body() dto: RefreshTokenDto) {
     return this.authService.logout(dto.refreshToken);
   }
@@ -68,9 +68,9 @@ export class AuthController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiBearerAuth('access-token')
   @ApiNoContentResponse()
-  @ApiOperation({
-    summary: 'Logout all device',
-  })
+  // @ApiOperation({
+  //   summary: 'Logout all device',
+  // })
   logoutAll(@CurrentUser() user: AuthUser) {
     return this.authService.logoutAll(user.id);
   }

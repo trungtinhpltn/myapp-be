@@ -23,9 +23,17 @@ async function bootstrap() {
   if (process.env.NODE_ENV !== 'production') {
     const config = new DocumentBuilder()
       .setTitle('POS API')
-      .setDescription('API description POS')
+      .setDescription('POS Backend API documentation')
       .setVersion('1.0')
-      .addBearerAuth()
+      .addBearerAuth(
+        {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          in: 'header',
+        },
+        'access-token',
+      )
       .build();
 
     const document = SwaggerModule.createDocument(app, config);

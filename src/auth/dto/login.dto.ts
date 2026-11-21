@@ -8,5 +8,6 @@ export class LoginDto {
 
   @IsString()
   @IsNotEmpty()
+  @ApiProperty({ example: '123456789' })
   password: string;
 }
